@@ -38,6 +38,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import static com.mulesoft.keycloak.auth.spi.duo.DuoMfaAuthenticatorFactory.*;
 
@@ -82,7 +83,6 @@ public class DuoMfaAuthenticator implements Authenticator {
     public void authenticate(AuthenticationFlowContext context) {
         Boolean duoRequired = false;
         String groups = duoGroups(context);
-        logger.infof("Duo groups %s(%s)", groups, groups.getClass().getName());
         UserModel user = context.getUser();
         for (GroupModel group : user.getGroups()) {
             if (groups.equals(group.getName())) {
@@ -94,7 +94,8 @@ public class DuoMfaAuthenticator implements Authenticator {
         if (groups != null && groups.isEmpty())
             duoRequired = true;
         if (!duoRequired) {
-            logger.infov("Skipping Duo MFA for {0} based on group membership", user.getUsername());
+            String userGroupsStr = user.getGroups().stream().map(GroupModel::getName).collect(Collectors.joining(","));
+            logger.infof("Skipping Duo MFA for %s based on group membership, groups=%s", user.getUsername(), userGroupsStr);
             context.success();
             return;
         }
