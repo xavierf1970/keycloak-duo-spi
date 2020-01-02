@@ -1,0 +1,3 @@
+[submodule "build/duo_java"]
+	path = build/duo_java
+	url = https://github.com/duosecurity/duo_java.git
