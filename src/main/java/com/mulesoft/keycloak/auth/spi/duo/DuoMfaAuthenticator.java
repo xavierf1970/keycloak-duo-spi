@@ -16,6 +16,7 @@ limitations under the License.
 
 package com.mulesoft.keycloak.auth.spi.duo;
 
+import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.AuthenticationFlowException;
@@ -43,6 +44,8 @@ import static com.mulesoft.keycloak.auth.spi.duo.DuoMfaAuthenticatorFactory.*;
 public class DuoMfaAuthenticator implements Authenticator {
 
     public DuoMfaAuthenticator() {}
+
+    private static final Logger logger = Logger.getLogger(DuoMfaAuthenticator.class);
 
     @Override
     public boolean requiresUser() {
@@ -77,14 +80,21 @@ public class DuoMfaAuthenticator implements Authenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        Boolean groupFound = false;
+        Boolean duoRequired = false;
+        String groups = duoGroups(context);
+        logger.infof("Duo groups %s(%s)", groups, groups.getClass().getName());
         UserModel user = context.getUser();
         for (GroupModel group : user.getGroups()) {
-            if (duoGroups(context).equals(group.getName())) {
-                groupFound = true;
+            if (groups.equals(group.getName())) {
+                duoRequired = true;
             }
         }
-        if (!groupFound) {
+        if (groups == null)
+            duoRequired = true;
+        if (groups != null && groups.isEmpty())
+            duoRequired = true;
+        if (!duoRequired) {
+            logger.infov("Skipping Duo MFA for {0} based on group membership", user.getUsername());
             context.success();
             return;
         }
@@ -144,7 +154,9 @@ public class DuoMfaAuthenticator implements Authenticator {
     private String duoGroups(AuthenticationFlowContext context) {
         AuthenticatorConfigModel config = context.getAuthenticatorConfig();
         if (config == null) return "";
-        return String.valueOf(config.getConfig().get(PROP_GROUPS));
+        String value = String.valueOf(config.getConfig().get(PROP_GROUPS));
+        if (value.equals("null")) return "";
+        return value;
     }
 
 }
