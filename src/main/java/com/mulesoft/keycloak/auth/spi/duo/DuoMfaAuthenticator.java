@@ -39,6 +39,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.mulesoft.keycloak.auth.spi.duo.DuoMfaAuthenticatorFactory.*;
 
@@ -79,21 +81,22 @@ public class DuoMfaAuthenticator implements Authenticator {
         return form.createForm("duo-mfa.ftl");
     }
 
-    @Override
-    public void authenticate(AuthenticationFlowContext context) {
-        Boolean duoRequired = false;
-        String groups = duoGroups(context);
-        UserModel user = context.getUser();
+    private boolean duoRequired(String duoGroups, UserModel user) {
+        if (duoGroups == null) return true;
+        if (duoGroups != null && duoGroups.isEmpty()) return true;
+        List<String> groups = Arrays.asList(duoGroups.split(","));
         for (GroupModel group : user.getGroups()) {
-            if (groups.equals(group.getName())) {
-                duoRequired = true;
+            if (groups.contains(group.getName())) {
+                return true;
             }
         }
-        if (groups == null)
-            duoRequired = true;
-        if (groups != null && groups.isEmpty())
-            duoRequired = true;
-        if (!duoRequired) {
+        return false;
+    }
+
+    @Override
+    public void authenticate(AuthenticationFlowContext context) {
+        UserModel user = context.getUser();
+        if (!duoRequired(duoGroups(context), user)) {
             String userGroupsStr = user.getGroups().stream().map(GroupModel::getName).collect(Collectors.joining(","));
             logger.infof("Skipping Duo MFA for %s based on group membership, groups=%s", user.getUsername(), userGroupsStr);
             context.success();
