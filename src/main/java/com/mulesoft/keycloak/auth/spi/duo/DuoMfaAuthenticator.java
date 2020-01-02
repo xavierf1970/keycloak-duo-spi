@@ -25,6 +25,7 @@ import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.GroupModel;
 
 import com.duosecurity.duoweb.DuoWeb;
 
@@ -39,7 +40,7 @@ import java.util.Random;
 
 import static com.mulesoft.keycloak.auth.spi.duo.DuoMfaAuthenticatorFactory.*;
 
-public class DuoMfaAuthenticator implements Authenticator{
+public class DuoMfaAuthenticator implements Authenticator {
 
     public DuoMfaAuthenticator() {}
 
@@ -76,6 +77,17 @@ public class DuoMfaAuthenticator implements Authenticator{
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
+        Boolean groupFound = false;
+        UserModel user = context.getUser();
+        for (GroupModel group : user.getGroups()) {
+            if (duoGroups(context).equals(group.getName())) {
+                groupFound = true;
+            }
+        }
+        if (!groupFound) {
+            context.success();
+            return;
+        }
         context.challenge(createDuoForm(context, null));
     }
 
@@ -128,6 +140,11 @@ public class DuoMfaAuthenticator implements Authenticator{
         AuthenticatorConfigModel config = context.getAuthenticatorConfig();
         if (config == null) return "";
         return String.valueOf(config.getConfig().get(PROP_APIHOST));
+    }
+    private String duoGroups(AuthenticationFlowContext context) {
+        AuthenticatorConfigModel config = context.getAuthenticatorConfig();
+        if (config == null) return "";
+        return String.valueOf(config.getConfig().get(PROP_GROUPS));
     }
 
 }

@@ -34,6 +34,7 @@ public class DuoMfaAuthenticatorFactory implements AuthenticatorFactory{
     public static final String PROP_SKEY = "duomfa.skey";
     public static final String PROP_AKEY = "duomfa.akey";
     public static final String PROP_APIHOST = "duomfa.apihost";
+    public static final String PROP_GROUPS = "duomfa.groups";
 
     @Override
     public String getId() {
@@ -94,6 +95,13 @@ public class DuoMfaAuthenticatorFactory implements AuthenticatorFactory{
         api_host.setType(ProviderConfigProperty.STRING_TYPE);
         api_host.setHelpText("API hostname from Duo admin portal");
         configProperties.add(api_host);
+
+        ProviderConfigProperty groups = new ProviderConfigProperty();
+        api_host.setName(PROP_GROUPS);
+        api_host.setLabel("Groups that require Duo");
+        api_host.setType(ProviderConfigProperty.STRING_TYPE);
+        api_host.setHelpText("Comma separated list of groups that require Duo (optional)");
+        configProperties.add(groups);
     }
 
     @Override
