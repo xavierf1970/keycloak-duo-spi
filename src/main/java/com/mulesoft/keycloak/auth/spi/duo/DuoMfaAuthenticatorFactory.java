@@ -97,10 +97,10 @@ public class DuoMfaAuthenticatorFactory implements AuthenticatorFactory{
         configProperties.add(api_host);
 
         ProviderConfigProperty groups = new ProviderConfigProperty();
-        api_host.setName(PROP_GROUPS);
-        api_host.setLabel("Groups that require Duo");
-        api_host.setType(ProviderConfigProperty.STRING_TYPE);
-        api_host.setHelpText("Comma separated list of groups that require Duo (optional)");
+        groups.setName(PROP_GROUPS);
+        groups.setLabel("Groups that require Duo");
+        groups.setType(ProviderConfigProperty.STRING_TYPE);
+        groups.setHelpText("Comma separated list of groups that require Duo (optional)");
         configProperties.add(groups);
     }
 
